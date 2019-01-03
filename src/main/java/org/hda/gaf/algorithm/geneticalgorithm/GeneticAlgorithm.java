@@ -1,10 +1,10 @@
 package org.hda.gaf.algorithm.geneticalgorithm;
 
-import org.hda.gaf.algorithm.output.GraphicOutput;
+import lombok.NoArgsConstructor;
 import org.hda.gaf.algorithm.Population;
 import org.hda.gaf.algorithm.PopulationGenerator;
+import org.hda.gaf.algorithm.output.GraphicOutput;
 import org.hda.gaf.algorithm.selectionalgorithm.SelectionAlgorithm;
-import lombok.NoArgsConstructor;
 
 /**
  * Created by marcus on 08.05.16.
@@ -76,11 +76,14 @@ public abstract class GeneticAlgorithm {
         return this;
     }
 
-    public Population generate() {
+    public Population generateStartPopulation() {
+        PopulationGenerator populationGenerator = new PopulationGenerator(primarySequence.length(), populationAmount);
+        return populationGenerator.generateStartPopulation();
+    }
+
+    public Population runAlgorithm(Population population) {
         setupStart();
 
-        PopulationGenerator populationGenerator = new PopulationGenerator(primarySequence.length(), populationAmount);
-        Population population = populationGenerator.generateStartPopulation();
         population.usesSelectionAlgorithm(selectionAlgorithm);
         population.setStartTime(startTime);
         population.setDocumentsStatistic(documentsStatistic);
@@ -127,4 +130,8 @@ public abstract class GeneticAlgorithm {
     protected abstract void setupStart();
 
     protected abstract Population generateTillLimit(Population population);
+
+    public int getCurrentGeneration() {
+        return currentGeneration;
+    }
 }

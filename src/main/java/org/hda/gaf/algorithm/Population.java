@@ -108,7 +108,7 @@ public class Population {
         saveValuesForChart(currentGeneration, currentBestProtein);
     }
 
-    private void printStatusOfCurrentGeneration(int currentGeneration, Structure currentBestProtein) {
+    public void printStatusOfCurrentGeneration(int currentGeneration, Structure currentBestProtein) {
         System.out.println("Generation " + currentGeneration + ":");
         System.out.println("  Total Fitness: " + statistic.getTotalFitness());
         System.out.println("  Average Fitness " + statistic.getAverageFitness());
