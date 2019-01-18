@@ -1,9 +1,11 @@
 package org.hda.gaf;
 
+import com.google.common.base.Splitter;
 import com.google.common.base.Stopwatch;
 import mpi.MPI;
 import org.hda.gaf.algorithm.Population;
 import org.hda.gaf.algorithm.evaluation.direction.RelativeDirection;
+import org.hda.gaf.algorithm.evaluation.node.Structure;
 import org.hda.gaf.algorithm.examples.Examples;
 import org.hda.gaf.algorithm.geneticalgorithm.GenerationLimitedAlgorithm;
 import org.hda.gaf.algorithm.geneticalgorithm.GeneticAlgorithm;
@@ -16,17 +18,17 @@ import org.jfree.data.category.DefaultCategoryDataset;
 
 import java.io.File;
 import java.time.Instant;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 public class Main {
 
     final static boolean DOCUMENTS_STATISTIC = false;
 
-    final static int GENERATION_AMOUNT = 163;
+    final static int GENERATION_AMOUNT = 100;
     final static long TIME_LIMIT = 10000;
     final static int POPULATION_AMOUNT = 2500;
     final static float MUTATION_RATE = 0.02F;
@@ -56,7 +58,6 @@ public class Main {
 //        GeneticAlgorithm geneticAlgorithm = new TimeLimitedAlgorithm().usesTimeLimit(TIME_LIMIT);
         GeneticAlgorithm geneticAlgorithm = new GenerationLimitedAlgorithm().usesGenerationLimit(GENERATION_AMOUNT / 5);
 
-        //TODO every x iterations share random results with neighbors
         geneticAlgorithm
                 .startedAt(Instant.now().toEpochMilli())
                 .documentsStatistic(DOCUMENTS_STATISTIC)
@@ -73,34 +74,101 @@ public class Main {
         ;
         Population population = geneticAlgorithm.generateStartPopulation();
 
-        Population neighborPopulation = new Population(POPULATION_AMOUNT);
-
         //Every process does this
         for (int i = 0; i < 5; i++) {
             population = geneticAlgorithm.runAlgorithm(population);
 
-            if (rank == 0) {
-                sendToNeighbor(nextNeighbor, individualAmountToSend, population);
-                receiveFromNeighbor(prevNeighbor, neighborPopulation);
-            } else {
-                receiveFromNeighbor(prevNeighbor, neighborPopulation);
-                sendToNeighbor(nextNeighbor, individualAmountToSend, population);
-            }
+            List<List<RelativeDirection>> neighborGenepool = shareAndReceiveNeighborPool(rank, nextNeighbor, prevNeighbor, individualAmountToSend, population);
+
+            addAndReplaceNeighborGenes(population, neighborGenepool);
         }
 
-        //TODO get overall best candidate
+        Population bestPopulation = collectPopulationWithBestProteins(rank, size, population);
 
         if (rank == 0) {
-            System.out.println("Calculation took: " + s.elapsed(TimeUnit.MILLISECONDS));
-            population.printStatusOfCurrentGeneration(geneticAlgorithm.getCurrentGeneration(), population.getBestProtein());
+            System.out.println("Current generation without size: " + geneticAlgorithm.getCurrentGeneration());
+            System.out.println("Size: " + size);
+            int calculatedGenerations = geneticAlgorithm.getCurrentGeneration() * size;
+            int calculatedPopulations = POPULATION_AMOUNT * calculatedGenerations;
+            System.out.println("Calculation took: " + s.elapsed(TimeUnit.MILLISECONDS) + " ms");
+            System.out.println("Calculation generations: " + calculatedGenerations);
+            System.out.println("Calculation populations: " + calculatedPopulations);
+
+
+            bestPopulation.printStatusOfCurrentGeneration(calculatedGenerations, bestPopulation.getBestProtein());
             saveChart(population);
         }
 
         MPI.Finalize();
     }
 
-    private static void sendToNeighbor(int to, int individualAmountToSend, Population population) {
-        //TODO send only part to neighbor
+    private static List<List<RelativeDirection>> shareAndReceiveNeighborPool(int rank, int nextNeighbor, int prevNeighbor, int individualAmountToSend, Population population) {
+        List<List<RelativeDirection>> neighborGenepool;
+
+        if (rank == 0) {
+            sendPoolToNeighbor(nextNeighbor, individualAmountToSend, population);
+            neighborGenepool = receivePoolFromNeighbor(prevNeighbor);
+        } else {
+            neighborGenepool = receivePoolFromNeighbor(prevNeighbor);
+            sendPoolToNeighbor(nextNeighbor, individualAmountToSend, population);
+        }
+        return neighborGenepool;
+    }
+
+    private static Population collectPopulationWithBestProteins(int rank, int size, Population population) {
+        if (rank == 0) {
+            Population bestPopulation = new Population(size);
+            bestPopulation.addGensToGenpool(population.getBestProtein().getRelativeDirections());
+
+            for (int from = 1; from < size; from++) {
+                String[] receive = new String[1];
+
+                MPI.COMM_WORLD.Recv(receive, 0, 1, MPI.OBJECT, from, 0);
+
+                List<RelativeDirection> receivedProtein = receive[0].chars()
+                        .mapToObj(i -> (char) i)
+                        .map(RelativeDirection::fromChar)
+                        .collect(Collectors.toList());
+
+                bestPopulation.addGensToGenpool(receivedProtein);
+            }
+
+            bestPopulation.evaluate(PRIMARY_SEQUENCE);
+
+            bestPopulation.saveResults(0);
+
+            for (Structure structure : bestPopulation.getStructures()) {
+                System.out.println("Best protein of one solution has neighbors: " + structure.getValidNeighborCount());
+            }
+
+            System.out.println("Received a new best protein: " + bestPopulation.getBestProtein().getValidNeighborCount());
+
+            return bestPopulation;
+
+        } else {
+            String[] send = new String[1];
+            send[0] = population.getBestProtein().getRelativeDirections()
+                    .stream()
+                    .map(RelativeDirection::getCharacter)
+                    .map(Object::toString)
+                    .collect(Collectors.joining());
+
+            MPI.COMM_WORLD.Send(send, 0, 1, MPI.OBJECT, 0, 0);
+
+            return null;
+        }
+    }
+
+    private static void addAndReplaceNeighborGenes(Population population, List<List<RelativeDirection>> neighborGenepool) {
+        List<List<RelativeDirection>> genepool = population.getGenepool();
+        Collections.shuffle(genepool);
+        for (List<RelativeDirection> genom : neighborGenepool) {
+            genepool.remove(0);
+            genepool.add(genom);
+        }
+    }
+
+    private static void sendPoolToNeighbor(int to, int individualAmountToSend, Population population) {
         List<List<RelativeDirection>> genepool = population.getGenepool();
 
         Collections.shuffle(genepool);
@@ -116,32 +184,23 @@ public class Main {
         String[] send = new String[1];
         send[0] = genePoolInStrings;
 
-        MPI.COMM_WORLD.Send(send, 0, PRIMARY_SEQUENCE.length() * individualAmountToSend, MPI.OBJECT, to, 0);
+        MPI.COMM_WORLD.Send(send, 0, 1, MPI.OBJECT, to, 0);
     }
 
-    private static void receiveFromNeighbor(int from, Population population) {
+    private static List<List<RelativeDirection>> receivePoolFromNeighbor(int from) {
         String[] receive = new String[1];
-        MPI.COMM_WORLD.Send(receive, 0, 1, MPI.OBJECT, from, 0);
+        MPI.COMM_WORLD.Recv(receive, 0, 1, MPI.OBJECT, from, 0);
 
-        int singleSequenceSize = PRIMARY_SEQUENCE.length() - 1;
-        String singleSequenceRegex = "(?=\\G.{" + singleSequenceSize + "})";
-        String[] splittedGenepool = receive[0].split(singleSequenceRegex);
+        int singleSequenceSize = PRIMARY_SEQUENCE.length();
+        Iterable<String> splittedGenepool = Splitter.fixedLength(singleSequenceSize).split(receive[0]);
 
-        List<List<RelativeDirection>> receivedGenepool = Arrays.stream(splittedGenepool)
+        return StreamSupport.stream(splittedGenepool.spliterator(), true)
                 .map(singleGenom ->
                         singleGenom.chars()
                                 .mapToObj(i -> (char) i)
                                 .map(RelativeDirection::fromChar)
                                 .collect(Collectors.toList()))
                 .collect(Collectors.toList());
-
-
-        List<List<RelativeDirection>> genepool = population.getGenepool();
-        Collections.shuffle(genepool);
-        for (List<RelativeDirection> genom : receivedGenepool) {
-            genepool.remove(0);
-            genepool.add(genom);
-        }
     }
 
     private static void saveChart(Population population) {
