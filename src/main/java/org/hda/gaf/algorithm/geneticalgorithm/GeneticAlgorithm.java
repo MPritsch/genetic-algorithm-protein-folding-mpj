@@ -85,8 +85,6 @@ public abstract class GeneticAlgorithm {
     }
 
     public Population runAlgorithm(Population population) {
-        setupStart();
-
         population.usesSelectionAlgorithm(selectionAlgorithm);
         population.setStartTime(startTime);
         population.setDocumentsStatistic(documentsStatistic);
@@ -129,8 +127,6 @@ public abstract class GeneticAlgorithm {
             paint(population);
         }
     }
-
-    protected abstract void setupStart();
 
     protected abstract Population generateTillLimit(Population population);
 

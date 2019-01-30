@@ -29,8 +29,4 @@ public class GenerationLimitedAlgorithm extends GeneticAlgorithm {
         return population;
     }
 
-    @Override
-    protected void setupStart() {
-
-    }
 }

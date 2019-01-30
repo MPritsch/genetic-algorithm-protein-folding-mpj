@@ -17,13 +17,14 @@ public class TimeLimitedAlgorithm extends GeneticAlgorithm{
         return this;
     }
 
-    protected void setupStart() {
+    private void setupStart() {
         Long startTime = Instant.now().toEpochMilli();
         endTime = startTime + time;
     }
 
     @Override
     protected Population generateTillLimit(Population population){
+        setupStart();
         while (!isOver()) {
             currentGeneration++;
             totalGeneration++;
