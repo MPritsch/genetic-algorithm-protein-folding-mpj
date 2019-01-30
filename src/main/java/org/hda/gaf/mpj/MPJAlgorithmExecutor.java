@@ -42,7 +42,6 @@ public class MPJAlgorithmExecutor {
 
     private static void addAndReplaceNeighborGenes(Population population, List<List<RelativeDirection>> neighborGenepool) {
         List<List<RelativeDirection>> genepool = population.getGenepool();
-        Collections.shuffle(genepool);
         for (List<RelativeDirection> genom : neighborGenepool) {
             genepool.remove(0);
             genepool.add(genom);

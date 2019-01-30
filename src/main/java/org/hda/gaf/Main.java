@@ -36,6 +36,7 @@ public class Main {
         int globalGenerationCount = MPJAlgorithmExecutor.getGlobalGenerationCount();
         Population bestPopulation = MPJPopulationCollector.collectPopulationWithBestProteins(rank, size, population);
 
+
         if (rank == 0) {
             System.out.println("Current generation without size: " + geneticAlgorithm.getCurrentGeneration());
             System.out.println("Size: " + size);

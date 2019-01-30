@@ -3,6 +3,7 @@
 
 *.iml
 *.jpg
+*.jpeg
 
 .idea/*
 target/*
