@@ -26,6 +26,7 @@ public class TimeLimitedAlgorithm extends GeneticAlgorithm{
     protected Population generateTillLimit(Population population){
         while (!isOver()) {
             currentGeneration++;
+            totalGeneration++;
 
             performAlgorithm(population);
         }

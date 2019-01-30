@@ -26,8 +26,6 @@ public class MPJAlgorithmExecutor {
         for (int i = 0; i < 5; i++) {
             population = geneticAlgorithm.runAlgorithm(population);
 
-            MPJStatisticsSharer.shareStatistics(population, rank, size);
-
             List<List<RelativeDirection>> neighborGenepool = MPJPopulationSharer.shareAndReceiveNeighborPool(rank, nextNeighbor, prevNeighbor, individualAmountToSend, population);
 
             addAndReplaceNeighborGenes(population, neighborGenepool);
@@ -36,6 +34,8 @@ public class MPJAlgorithmExecutor {
                 System.out.println("Done with " + i + ". iteration.");
             }
         }
+
+        MPJStatisticsSharer.shareStatistics(population, rank, size);
 
         return population;
     }

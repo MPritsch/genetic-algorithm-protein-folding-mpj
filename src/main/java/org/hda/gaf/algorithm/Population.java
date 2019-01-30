@@ -56,15 +56,15 @@ public class Population {
         structures.add(structure);
     }
 
-    public void saveResults(int currentGeneration) {
+    public void saveResults(int totalGeneration) {
         Structure currentBestProtein = calculateStatisticAndGetCurrentBestProtein();
 
         checkForNewBestProtein(currentBestProtein);
 
-        statistic.setGeneration(currentGeneration);
+        statistic.setGeneration(totalGeneration);
         statistic.setBestProteinInGeneration(currentBestProtein);
 
-        saveAndPrintResults(currentGeneration, currentBestProtein);
+        saveAndPrintResults(totalGeneration, currentBestProtein);
     }
 
     private void checkForNewBestProtein(Structure currentBestProtein) {
@@ -100,12 +100,12 @@ public class Population {
         return currentBestProtein.orElse(null);
     }
 
-    private void saveAndPrintResults(int currentGeneration, Structure currentBestProtein) {
+    private void saveAndPrintResults(int totalGeneration, Structure currentBestProtein) {
         if (documentsStatistic) {
-            printStatusOfCurrentGeneration(currentGeneration, currentBestProtein);
+            printStatusOfCurrentGeneration(totalGeneration, currentBestProtein);
         }
 //        bestProtein.printStructure();
-        saveValuesForChart(currentGeneration, currentBestProtein);
+        saveValuesForChart(totalGeneration, currentBestProtein);
     }
 
     public void printStatusOfCurrentGeneration(int currentGeneration, Structure currentBestProtein) {

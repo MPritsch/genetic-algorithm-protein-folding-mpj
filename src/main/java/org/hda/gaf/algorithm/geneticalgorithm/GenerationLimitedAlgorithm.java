@@ -16,8 +16,9 @@ public class GenerationLimitedAlgorithm extends GeneticAlgorithm {
 
     @Override
     protected Population generateTillLimit(Population population) {
-        while (currentGeneration < generationAmount - 1) {
+        while (currentGeneration < generationAmount) {
             currentGeneration++;
+            totalGeneration++;
 
             performAlgorithm(population);
 
