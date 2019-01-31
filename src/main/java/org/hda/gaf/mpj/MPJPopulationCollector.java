@@ -21,17 +21,19 @@ public class MPJPopulationCollector {
             Population bestPopulation = new Population(size);
             bestPopulation.addGensToGenpool(population.getBestProtein().getRelativeDirections());
 
-            for (int from = 1; from < size; from++) {
-                String[] receive = new String[1];
+            if (size > 1) {
+                for (int from = 1; from < size; from++) {
+                    String[] receive = new String[1];
 
-                MPI.COMM_WORLD.Recv(receive, 0, 1, MPI.OBJECT, from, 0);
+                    MPI.COMM_WORLD.Recv(receive, 0, 1, MPI.OBJECT, from, 0);
 
-                List<RelativeDirection> receivedProtein = receive[0].chars()
-                        .mapToObj(i -> (char) i)
-                        .map(RelativeDirection::fromChar)
-                        .collect(Collectors.toList());
+                    List<RelativeDirection> receivedProtein = receive[0].chars()
+                            .mapToObj(i -> (char) i)
+                            .map(RelativeDirection::fromChar)
+                            .collect(Collectors.toList());
 
-                bestPopulation.addGensToGenpool(receivedProtein);
+                    bestPopulation.addGensToGenpool(receivedProtein);
+                }
             }
 
             bestPopulation.evaluate(PRIMARY_SEQUENCE);

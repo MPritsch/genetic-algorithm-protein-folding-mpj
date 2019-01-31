@@ -26,9 +26,11 @@ public class MPJAlgorithmExecutor {
         for (int i = 0; i < 5; i++) {
             population = geneticAlgorithm.runAlgorithm(population);
 
-            List<List<RelativeDirection>> neighborGenepool = MPJPopulationSharer.shareAndReceiveNeighborPool(rank, nextNeighbor, prevNeighbor, individualAmountToSend, population);
+            if (size > 1) {
+                List<List<RelativeDirection>> neighborGenepool = MPJPopulationSharer.shareAndReceiveNeighborPool(rank, nextNeighbor, prevNeighbor, individualAmountToSend, population);
 
-            addAndReplaceNeighborGenes(population, neighborGenepool);
+                addAndReplaceNeighborGenes(population, neighborGenepool);
+            }
 
             if (rank == 0) {
                 System.out.println("Done with " + i + ". iteration.");
