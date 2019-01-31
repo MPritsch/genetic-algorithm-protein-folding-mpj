@@ -4,8 +4,6 @@ import org.hda.gaf.algorithm.geneticalgorithm.GenerationLimitedAlgorithm;
 import org.hda.gaf.algorithm.geneticalgorithm.GeneticAlgorithm;
 import org.hda.gaf.algorithm.geneticalgorithm.TimeLimitedAlgorithm;
 import org.hda.gaf.algorithm.selectionalgorithm.FitnessProportionalSelectionAlgorithm;
-import org.hda.gaf.algorithm.selectionalgorithm.TunierBestFitnessSelectionAlgorithm;
-import org.hda.gaf.algorithm.selectionalgorithm.TunierFitnessProportionalSelectionAlgorithm;
 
 import java.time.Instant;
 import java.util.Arrays;
@@ -29,10 +27,9 @@ public class GeneticAlgorithmGenerator {
                 .hasPopulationAmountOf(POPULATION_AMOUNT)
                 .hasCrossoverRateOf(CROSSOVER_RATE)
                 .hasMutationRateOf(MUTATION_RATE)
+                .usesSelectionAlgorithm(new FitnessProportionalSelectionAlgorithm())
                 .calculatesHammingDistance(CALC_HEMMING_DISTANCE)
                 .printsWhileGenerating(PRINT_WHILE_GENERATING);
-
-        addSelectionAlgorithm(geneticAlgorithm, rank);
 
         return geneticAlgorithm;
     }
@@ -93,21 +90,6 @@ public class GeneticAlgorithmGenerator {
             System.out.println("Executing 'generation' limited algorithm with total " + generationAmount + " per process.");
         }
         return geneticAlgorithm;
-    }
-
-    private void addSelectionAlgorithm(GeneticAlgorithm geneticAlgorithm, int rank) {
-        if (rank % 3 == 0) {
-            System.out.println(rank + " uses fitness proportional selection algorithm");
-            geneticAlgorithm.usesSelectionAlgorithm(new FitnessProportionalSelectionAlgorithm());
-
-        } else if (rank % 3 == 1) {
-            System.out.println(rank + " uses tunier proportional selection algorithm");
-            geneticAlgorithm.usesSelectionAlgorithm(new TunierFitnessProportionalSelectionAlgorithm(CANDIDATE_AMOUNT_PER_SELECTION));
-
-        } else if (rank % 3 == 2) {
-            System.out.println(rank + " uses tunier best proportional selection algorithm");
-            geneticAlgorithm.usesSelectionAlgorithm(new TunierBestFitnessSelectionAlgorithm(CANDIDATE_AMOUNT_PER_SELECTION));
-        }
     }
 
     private static void printCommandLineOptions(int rank) {
