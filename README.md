@@ -110,6 +110,14 @@ PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:~/bin:$MPJ_HOM
 PATH=$MPJ_HOME/bin:$PATH
 ```
 
+You also will need to authorize your nodes to communicate with each other over ssh.
+Otherwise when setting up the nodes via mpjboot it will constantly ask for you password.
+```
+ssh-keygen -t rsa
+ssh <user>@<node> mkdir -p .ssh
+cat .ssh/id_rsa.pub | ssh <user>@<node> 'cat >> .ssh/authorized_keys'
+```
+
 Create a machines file. Add the addresses of your nodes to it (separated by newlines). \
 `nano machines`
 
